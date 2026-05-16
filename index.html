@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
 <meta name="theme-color" content="#1f2937" />
 <title>档案重点筛选器 · PDF 标注与精简导出</title>
 <link rel="stylesheet" href="styles.css" />
@@ -26,29 +26,37 @@
   <section id="empty-state" class="empty">
     <div class="empty-card">
       <h1>只导出你画过线的页面</h1>
-      <p>在 PDF 上用下划线或高亮标出重点，导出时未标注的页面会被自动删除。整个过程在本地浏览器完成，文件不会上传。</p>
+      <p>在 PDF 上用直线、手写或高亮笔标出重点，导出时未标注的页面会被自动删除。整个过程在本地浏览器完成，文件不会上传。</p>
       <label class="btn primary big file-btn">
         <input type="file" id="file-input-empty" accept="application/pdf" hidden />
         <span>选择 PDF 开始</span>
       </label>
       <ul class="empty-hints">
-        <li>支持手机触控划线</li>
-        <li>支持下划线 / 高亮 / 颜色 / 线宽</li>
+        <li>默认是「浏览」模式，可自由滚动/缩放</li>
+        <li>切到工具后才进入标注，再切回浏览继续翻页</li>
         <li>导出文件名：<code>原文件名-marked-pages.pdf</code></li>
       </ul>
     </div>
   </section>
 
   <section id="viewer" class="viewer hidden">
-    <div id="pages-container" class="pages"></div>
+    <div id="pages-container" class="pages scroll-mode"></div>
   </section>
 </main>
 
 <nav id="toolbar" class="toolbar hidden" aria-label="标注工具栏">
   <div class="tool-group">
-    <button class="tool-btn active" data-tool="underline" title="下划线">
-      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 18h16M6 6v6a6 6 0 0 0 12 0V6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span>下划线</span>
+    <button class="tool-btn active" data-tool="none" title="浏览（可自由滚动）">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M13 2 5 12h4l-1 10 8-10h-4l1-10z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" transform="rotate(45 12 12)"/></svg>
+      <span>浏览</span>
+    </button>
+    <button class="tool-btn" data-tool="line" title="直线（任意角度）">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 20 20 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>直线</span>
+    </button>
+    <button class="tool-btn" data-tool="pen" title="手写">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 20c2-1 3-4 5-4s2 3 4 3 3-6 5-6 2 4 2 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>手写</span>
     </button>
     <button class="tool-btn" data-tool="highlight" title="高亮">
       <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 19h16M5 16l8-8 5 5-8 8H5v-5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
@@ -110,7 +118,6 @@
   </form>
 </dialog>
 
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs" type="module"></script>
 <script type="module">
   import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs';
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs';

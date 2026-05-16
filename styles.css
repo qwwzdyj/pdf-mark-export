@@ -194,7 +194,18 @@ input, select {
   border-radius: 4px;
   overflow: hidden;
   max-width: 100%;
-  touch-action: pan-y;
+}
+
+.page-wrapper.placeholder::after {
+  content: "加载中…";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-dim);
+  font-size: 13px;
+  pointer-events: none;
 }
 
 .page-wrapper.has-annotations::before {
@@ -218,6 +229,15 @@ input, select {
   cursor: crosshair;
   touch-action: none;
 }
+
+/* 浏览模式：穿透事件，让页面正常滚动/缩放 */
+.pages.scroll-mode .overlay {
+  pointer-events: none;
+  cursor: default;
+  touch-action: auto;
+}
+
+.pages.scroll-mode .page-wrapper { cursor: default; }
 
 .page-label {
   position: absolute;
