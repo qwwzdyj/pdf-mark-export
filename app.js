@@ -307,6 +307,11 @@ function attachDrawing(entry) {
   let preview = null;       // 当前未提交的标注
   let currentTool = null;
 
+  // 多指手势状态
+  let suppressDrawUntilLift = false; // 一旦出现 >=2 指，本轮所有手指抬起前都不再画
+  let threeFingerActive = false;     // 3 指（及以上）滚动模式
+  let threeFingerY = 0;               // 上次平均 Y（clientY，CSS 像素）
+
   function pdfPointFromEvent(ev) {
     const rect = overlay.getBoundingClientRect();
     const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
@@ -318,13 +323,40 @@ function attachDrawing(entry) {
     return { x, y };
   }
 
-  function isMultiTouch(ev) {
-    return ev.touches && ev.touches.length > 1;
+  function avgClientY(touches) {
+    let s = 0;
+    for (let i = 0; i < touches.length; i++) s += touches[i].clientY;
+    return s / touches.length;
+  }
+
+  function cancelDraw() {
+    if (!drawing && !preview) return;
+    drawing = false;
+    preview = null;
+    drawAnnotations(entry);
   }
 
   function start(ev) {
     if (state.tool === 'none') return;
-    if (isMultiTouch(ev)) return;
+    const touches = ev.touches;
+
+    if (touches && touches.length >= 2) {
+      // 出现多指：取消任何正在画的笔，禁止本轮再画
+      cancelDraw();
+      suppressDrawUntilLift = true;
+      if (touches.length >= 3) {
+        threeFingerActive = true;
+        threeFingerY = avgClientY(touches);
+        ev.preventDefault(); // 我们自己处理滚动
+      } else {
+        threeFingerActive = false;
+        // 2 指：不 preventDefault，交给浏览器做 pinch-zoom
+      }
+      return;
+    }
+
+    // 单指（或鼠标）
+    if (suppressDrawUntilLift) return; // 还有手指没抬完，先不画
     ev.preventDefault();
     drawing = true;
     currentTool = state.tool;
@@ -337,7 +369,7 @@ function attachDrawing(entry) {
       };
     } else {
       preview = {
-        id: uuid(), page: entry.pageNumber, type: currentTool, // 'pen' | 'highlight'
+        id: uuid(), page: entry.pageNumber, type: currentTool,
         points: [{ x: pt.x, y: pt.y }],
         color: state.color, width: state.width,
       };
@@ -346,13 +378,31 @@ function attachDrawing(entry) {
   }
 
   function move(ev) {
-    if (!drawing) return;
-    if (isMultiTouch(ev)) {
-      drawing = false;
-      preview = null;
-      drawAnnotations(entry);
+    const touches = ev.touches;
+
+    // 3 指滚动优先
+    if (threeFingerActive && touches && touches.length >= 3) {
+      const cur = avgClientY(touches);
+      const dy = threeFingerY - cur;
+      window.scrollBy(0, dy);
+      threeFingerY = cur;
+      ev.preventDefault();
       return;
     }
+
+    // 画到一半冒出 2/3 指：放弃这笔，并按多指规则切换
+    if (drawing && touches && touches.length >= 2) {
+      cancelDraw();
+      suppressDrawUntilLift = true;
+      if (touches.length >= 3) {
+        threeFingerActive = true;
+        threeFingerY = avgClientY(touches);
+        ev.preventDefault();
+      }
+      return;
+    }
+
+    if (!drawing) return;
     ev.preventDefault();
     const pt = pdfPointFromEvent(ev);
     if (preview.type === 'line') {
@@ -367,6 +417,10 @@ function attachDrawing(entry) {
   }
 
   function end(ev) {
+    const remaining = ev.touches ? ev.touches.length : 0;
+    if (remaining < 3) threeFingerActive = false;
+    if (remaining === 0) suppressDrawUntilLift = false;
+
     if (!drawing) return;
     drawing = false;
     if (!preview) return;

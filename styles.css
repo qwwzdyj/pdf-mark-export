@@ -227,7 +227,8 @@ input, select {
   position: absolute;
   inset: 0;
   cursor: crosshair;
-  touch-action: none;
+  /* 单指由 JS 捕获画线；2 指交给浏览器 pinch-zoom；3 指由 JS 接管做滚动 */
+  touch-action: pinch-zoom;
 }
 
 /* 浏览模式：穿透事件，让页面正常滚动/缩放 */
