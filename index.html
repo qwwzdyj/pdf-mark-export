@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#1f2937" />
+<title>档案重点筛选器 · PDF 标注与精简导出</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="dot"></span>
+    <span>档案重点筛选器</span>
+  </div>
+  <div class="topbar-actions">
+    <label class="btn primary file-btn">
+      <input type="file" id="file-input" accept="application/pdf" hidden />
+      <span>上传 PDF</span>
+    </label>
+    <button id="export-btn" class="btn" disabled>导出已标注页面</button>
+  </div>
+</header>
+
+<main id="app">
+  <section id="empty-state" class="empty">
+    <div class="empty-card">
+      <h1>只导出你画过线的页面</h1>
+      <p>在 PDF 上用下划线或高亮标出重点，导出时未标注的页面会被自动删除。整个过程在本地浏览器完成，文件不会上传。</p>
+      <label class="btn primary big file-btn">
+        <input type="file" id="file-input-empty" accept="application/pdf" hidden />
+        <span>选择 PDF 开始</span>
+      </label>
+      <ul class="empty-hints">
+        <li>支持手机触控划线</li>
+        <li>支持下划线 / 高亮 / 颜色 / 线宽</li>
+        <li>导出文件名：<code>原文件名-marked-pages.pdf</code></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="viewer" class="viewer hidden">
+    <div id="pages-container" class="pages"></div>
+  </section>
+</main>
+
+<nav id="toolbar" class="toolbar hidden" aria-label="标注工具栏">
+  <div class="tool-group">
+    <button class="tool-btn active" data-tool="underline" title="下划线">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 18h16M6 6v6a6 6 0 0 0 12 0V6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>下划线</span>
+    </button>
+    <button class="tool-btn" data-tool="highlight" title="高亮">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 19h16M5 16l8-8 5 5-8 8H5v-5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      <span>高亮</span>
+    </button>
+  </div>
+
+  <div class="tool-group colors" id="color-group">
+    <button class="color-swatch active" data-color="#e22b2b" style="--c:#e22b2b" aria-label="红"></button>
+    <button class="color-swatch" data-color="#f5a524" style="--c:#f5a524" aria-label="橙"></button>
+    <button class="color-swatch" data-color="#facc15" style="--c:#facc15" aria-label="黄"></button>
+    <button class="color-swatch" data-color="#16a34a" style="--c:#16a34a" aria-label="绿"></button>
+    <button class="color-swatch" data-color="#2563eb" style="--c:#2563eb" aria-label="蓝"></button>
+  </div>
+
+  <div class="tool-group widths">
+    <label class="width-control">
+      <span class="width-label">线宽</span>
+      <input type="range" id="width-input" min="1" max="20" value="4" />
+      <span id="width-value">4</span>
+    </label>
+  </div>
+
+  <div class="tool-group">
+    <button id="undo-btn" class="tool-btn ghost" title="撤销当前页最后一笔">撤销</button>
+    <button id="clear-page-btn" class="tool-btn ghost" title="清空当前页标注">清空本页</button>
+  </div>
+
+  <div class="tool-group zoom">
+    <button id="zoom-out" class="tool-btn ghost">−</button>
+    <select id="zoom-select" class="zoom-select">
+      <option value="page">整页</option>
+      <option value="width" selected>适宽</option>
+      <option value="0.5">50%</option>
+      <option value="0.75">75%</option>
+      <option value="1">100%</option>
+      <option value="1.25">125%</option>
+      <option value="1.5">150%</option>
+      <option value="2">200%</option>
+    </select>
+    <button id="zoom-in" class="tool-btn ghost">+</button>
+  </div>
+
+  <div class="tool-group meta">
+    <span id="annotation-count" class="meta-text">0 页已标注</span>
+  </div>
+</nav>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<dialog id="confirm-dialog" class="confirm-dialog">
+  <form method="dialog">
+    <h3 id="confirm-title">提示</h3>
+    <p id="confirm-message"></p>
+    <menu>
+      <button value="cancel" class="btn ghost">取消</button>
+      <button value="confirm" class="btn primary" id="confirm-ok">确认</button>
+    </menu>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs" type="module"></script>
+<script type="module">
+  import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs';
+  window.pdfjsLib = pdfjsLib;
+  window.dispatchEvent(new Event('pdfjs-ready'));
+</script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="app.js" type="module"></script>
+</body>
+</html>
