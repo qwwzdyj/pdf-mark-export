@@ -113,6 +113,7 @@ async function mountViewer() {
   el.emptyState.classList.add('hidden');
   el.viewer.classList.remove('hidden');
   el.toolbar.classList.remove('hidden');
+  syncToolbarToVisualViewport();
   el.pagesContainer.innerHTML = '';
   state.pages = [];
 
@@ -509,6 +510,27 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(reflowAndRerender, 200);
 });
+
+// ---------- 工具栏跟随视觉视口（解决 pinch-zoom 后工具栏跑掉） ----------
+function syncToolbarToVisualViewport() {
+  const vv = window.visualViewport;
+  const tb = el.toolbar;
+  if (!vv || tb.classList.contains('hidden')) return;
+  const scale = 1 / vv.scale;
+  // 用 top 代替 bottom，因为 bottom 锚布局视口，没法跟随 pinch-zoom 的可视区域
+  tb.style.left = (vv.offsetLeft + vv.width / 2) + 'px';
+  tb.style.top = (vv.offsetTop + vv.height) + 'px';
+  tb.style.bottom = 'auto';
+  tb.style.transform = `translate(-50%, calc(-100% - 8px)) scale(${scale})`;
+  tb.style.transformOrigin = 'bottom center';
+}
+
+if (window.visualViewport) {
+  const vv = window.visualViewport;
+  vv.addEventListener('resize', syncToolbarToVisualViewport);
+  vv.addEventListener('scroll', syncToolbarToVisualViewport);
+}
+window.addEventListener('orientationchange', syncToolbarToVisualViewport);
 
 // ---------- Export ----------
 function getMarkedPages() {
